@@ -14,8 +14,7 @@ namespace NMB.Services
             var embed = await Task.Run(() => (new EmbedBuilder()
                 .WithTitle(title)
                 .WithDescription(description)
-                .WithColor(color)
-                .WithCurrentTimestamp().Build()));
+                .WithColor(color).Build()));
             return embed;
         }
 
@@ -24,8 +23,22 @@ namespace NMB.Services
             var embed = await Task.Run(() => new EmbedBuilder()
                 .WithTitle($"ERROR OCCURED FROM - {source}")
                 .WithDescription($"**Error Details**: \n{error}")
-                .WithColor(Color.DarkRed)
-                .WithCurrentTimestamp().Build());
+                .WithColor(Color.DarkRed).Build());
+            return embed;
+        }
+
+        public static async Task<Embed> CreateListEmbed(string title, List<string> elementsToShow, Color color)
+        {
+
+            StringBuilder description = new StringBuilder();
+            for (int i = 0; i < elementsToShow.Count; i++)
+                description.Append($"{i}. {elementsToShow[i]}");
+
+            var embed = await Task.Run(() => new EmbedBuilder()
+                        .WithTitle(title)
+                        .WithDescription(description.ToString())
+                        .WithColor(color)
+                        .Build());
             return embed;
         }
     }

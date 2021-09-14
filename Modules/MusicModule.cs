@@ -23,9 +23,16 @@ namespace NMB.Modules
         public async Task Leave()
             => await ReplyAsync(embed: await MusicSevice.LeaveAsync(Context.Guild));
 
-        [Command("Play")]
+
+        [Command("fPlay")]
+        [Alias("fp")]
         public async Task Play([Remainder] string search)
-            => await ReplyAsync(embed: await MusicSevice.PlayAsync(Context.User as SocketGuildUser, Context.Guild, search));
+            => await ReplyAsync(embed: await MusicSevice.PlayAsync(Context.User as SocketGuildUser, Context.Guild, Context.User as IVoiceState, Context.Channel as ITextChannel, search));
+
+        [Command("Play")]
+        [Alias("p")]
+        public async Task ForcePlay([Remainder] string search)
+            => await ReplyAsync(embed: await MusicSevice.ForcePlayAsync(Context.User as SocketGuildUser, Context.Guild, Context.User as IVoiceState, Context.Channel as ITextChannel, search));
 
         [Command("Stop")]
         public async Task Stop()
@@ -37,10 +44,12 @@ namespace NMB.Modules
             => await ReplyAsync(embed: await MusicSevice.ListAsync(Context.Guild));
 
         [Command("Skip")]
+        [Alias("s")]
         public async Task Skip()
             => await ReplyAsync(embed: await MusicSevice.SkipTrackAsync(Context.Guild));
 
         [Command("Volume")]
+        [Alias("v")]
         public async Task Volume(int volume)
             => await ReplyAsync(await MusicSevice.SetVolumeAsync(Context.Guild, volume));
 

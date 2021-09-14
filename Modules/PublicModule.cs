@@ -13,7 +13,18 @@ namespace NMB.Modules
 
         [Command("ping")]
         [Alias("pong", "hello")]
-        public Task PingAsync() => ReplyAsync("pong!");
+        public Task PingAsync() => ReplyAsync("pong!", isTTS: true);
+
+        [Command("1")]
+        [Alias("2", "3", "4", "5")]
+        public Task ChoiceAsync([Remainder] string text) => ReplyAsync(text);
+
+        [Command("last")]
+        public  async Task LastAsync(IUserMessage userMessage = null)
+        {
+            userMessage = userMessage ?? Context.Message;
+            await ReplyAsync(userMessage.ToString());
+        }
 
 
         // Get info on a user, or the user who invoked the command if one is not specified
