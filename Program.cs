@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,6 +84,7 @@ namespace NMB
                 {
                     x.SelfDeaf = false;
                 })
+                .AddSingleton<InteractiveService>()
                 .AddSingleton<MusicService>()
                 .BuildServiceProvider();
         }

@@ -32,7 +32,7 @@ namespace NMB.Services
 
             StringBuilder description = new StringBuilder();
             for (int i = 0; i < elementsToShow.Count; i++)
-                description.Append($"{i}. {elementsToShow[i]}");
+                description.Append($"{i + 1}. {elementsToShow[i]}\n");
 
             var embed = await Task.Run(() => new EmbedBuilder()
                         .WithTitle(title)

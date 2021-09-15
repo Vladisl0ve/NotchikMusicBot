@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Discord.Addons.Interactive;
 using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
@@ -126,6 +127,27 @@ namespace NMB.Services
 
         }
 
+        public async Task<Embed> FindTracksAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel textChannel, string query)
+        {
+            List<LavaTrack> tracks;
+
+            var search = Uri.IsWellFormedUriString(query, UriKind.Absolute) ?
+                await _lavaNode.SearchAsync(SearchType.Direct, query)
+                : await _lavaNode.SearchYouTubeAsync(query);
+
+            if (search.Status == SearchStatus.NoMatches)
+                return await EmbedHandlingService.CreateErrorEmbed("Music", $"I wasn't able to find anything for {query}.");
+
+            tracks = search.Tracks.Take(5).ToList();
+            List<string> tracksToShow = new List<string>();
+
+            foreach (var tracking in tracks)
+                tracksToShow.Add($"{tracking.Title.Substring(0, tracking.Title.Count() > 100 ? 100 : tracking.Title.Count())} ({(int)tracking.Duration.TotalHours}:{tracking.Duration.ToString("mm")}:{tracking.Duration.ToString("ss")})");
+
+            return await EmbedHandlingService.CreateListEmbed("Choose the track", tracksToShow, Color.Blue);
+
+        }
+
         //Play with list of tracks
         public async Task<Embed> PlayAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel textChannel, string query)
         {
@@ -174,6 +196,8 @@ namespace NMB.Services
                     tracksToShow.Add(tracking.Title);
 
                 await EmbedHandlingService.CreateListEmbed("Choose the track", tracksToShow, Color.Blue);
+
+
                 var track = tracks[int.Parse(choice)];
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
@@ -379,7 +403,7 @@ namespace NMB.Services
                 }
 
                 await player.PauseAsync();
-                return $"**Paused:** {player.Track.Title}. MB Shreksophone next?";
+                return $"**Paused:** {player.Track.Title}";
             }
             catch (InvalidOperationException ex)
             {
