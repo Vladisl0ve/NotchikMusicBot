@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
@@ -29,7 +27,6 @@ namespace NMB.Services
 
         public static async Task<Embed> CreateListEmbed(string title, List<string> elementsToShow, Color color)
         {
-
             StringBuilder description = new StringBuilder();
             for (int i = 0; i < elementsToShow.Count; i++)
                 description.Append($"{i + 1}. {elementsToShow[i]}\n");

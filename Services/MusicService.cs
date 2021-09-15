@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Discord.Addons.Interactive;
 using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
@@ -19,6 +18,7 @@ namespace NMB.Services
         private readonly LavaNode _lavaNode;
         private readonly DiscordSocketClient _client;
         private string choice = null;
+        public bool isPlaying => _lavaNode.Players.Any(p => p.Track != null);
 
         public MusicService(LavaNode lavaNode, DiscordSocketClient client)
         {
@@ -39,6 +39,7 @@ namespace NMB.Services
             choice = message.Content;
             return Task.CompletedTask;
         }
+
         public async Task<Embed> JoinAsync(IGuild guild, IVoiceState voiceState, ITextChannel textChannel)
         {
             if (_lavaNode.HasPlayer(guild))
@@ -124,10 +125,9 @@ namespace NMB.Services
             {
                 return await EmbedHandlingService.CreateErrorEmbed("Music, Play", ex.Message);
             }
-
         }
 
-        public async Task<Embed> FindTracksAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel textChannel, string query)
+        public async Task<Embed> FindTracksAsync(string query)
         {
             List<LavaTrack> tracks;
 
@@ -145,8 +145,125 @@ namespace NMB.Services
                 tracksToShow.Add($"{tracking.Title.Substring(0, tracking.Title.Count() > 100 ? 100 : tracking.Title.Count())} ({(int)tracking.Duration.TotalHours}:{tracking.Duration.ToString("mm")}:{tracking.Duration.ToString("ss")})");
 
             return await EmbedHandlingService.CreateListEmbed("Choose the track", tracksToShow, Color.Blue);
-
         }
+
+        public async Task<Embed> PlayChosenTrackAsync(SocketGuildUser user, IVoiceState voiceState, ITextChannel textChannel, string query, int numberOfTrack)
+        {
+            IGuild guild = voiceState.VoiceChannel.Guild;
+
+            //Check If User Is Connected To Voice Cahnnel.
+            if (user.VoiceChannel == null)
+            {
+                return await EmbedHandlingService.CreateErrorEmbed("Music, Play", "You Must First Join a Voice Channel.");
+            }
+
+            //Check the guild has a player available.
+            if (!_lavaNode.HasPlayer(guild))
+            {
+                try
+                {
+                    await _lavaNode.JoinAsync(voiceState.VoiceChannel, textChannel);
+                }
+                catch (Exception ex)
+                {
+                    return await EmbedHandlingService.CreateErrorEmbed("Music, Join", ex.Message);
+                }
+            }
+
+            try
+            {
+                //Get the player for that guild.
+                var player = _lavaNode.GetPlayer(guild);
+                //Find The Youtube Track the User requested.
+
+                var search = Uri.IsWellFormedUriString(query, UriKind.Absolute) ?
+                    await _lavaNode.SearchAsync(SearchType.Direct, query)
+                    : await _lavaNode.SearchYouTubeAsync(query);
+
+                //If we couldn't find anything, tell the user.
+                if (search.Status == SearchStatus.NoMatches)
+                {
+                    return await EmbedHandlingService.CreateErrorEmbed("Music", $"I wasn't able to find anything for {query}.");
+                }
+
+                var track = search.Tracks.ElementAt(numberOfTrack - 1);
+                if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
+                {
+                    player.Queue.Enqueue(track);
+                    await LoggingService.LogInformationAsync("Music", $"{track.Title} has been added to the music queue.");
+                    return await EmbedHandlingService.CreateBasicEmbed("Music", $"{track.Title} has been added to queue.", Color.Blue);
+                }
+
+                //Player was not playing anything, so lets play the requested track.
+                await player.PlayAsync(track);
+                await LoggingService.LogInformationAsync("Music", $"Bot Now Playing: {track.Title}\nUrl: {track.Url}");
+                return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {track.Title}\nUrl: {track.Url}", Color.Blue);
+            }
+            catch (Exception ex)
+            {
+                return await EmbedHandlingService.CreateErrorEmbed("Music, Play", ex.Message);
+            }
+        }
+
+        public async Task PressFAsync(SocketGuildUser user, IVoiceState voiceState, ITextChannel textChannel, string query = "https://www.youtube.com/watch?v=0s9P1IFxJ0Y")
+        {
+            IGuild guild = voiceState.VoiceChannel.Guild;
+            //Check If User Is Connected To Voice Cahnnel.
+            if (user.VoiceChannel == null)
+            {
+                return;
+            }
+
+            //Check the guild has a player available.
+            if (!_lavaNode.HasPlayer(guild))
+            {
+                try
+                {
+                    await _lavaNode.JoinAsync(voiceState.VoiceChannel, textChannel);
+                }
+                catch (Exception ex)
+                {
+                    await LoggingService.LogInformationAsync("F command", $"{ex.Message}");
+                    return;
+                }
+            }
+
+            try
+            {
+                //Get the player for that guild.
+                var player = _lavaNode.GetPlayer(guild);
+                //Find The Youtube Track the User requested.
+                LavaTrack track;
+
+                var search = Uri.IsWellFormedUriString(query, UriKind.Absolute) ?
+                    await _lavaNode.SearchAsync(SearchType.Direct, query)
+                    : await _lavaNode.SearchYouTubeAsync(query);
+
+                //If we couldn't find anything, tell the user.
+                if (search.Status == SearchStatus.NoMatches)
+                {
+                    await LoggingService.LogInformationAsync("F command", $"Youtube pojebało");
+                    return;
+                }
+
+                track = search.Tracks.First();
+                if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
+                {
+                    player.Queue.Enqueue(track);
+                    await LoggingService.LogInformationAsync("F command", $"{track.Title} is playing, sorry");
+                    return;
+                }
+
+                //Player was not playing anything, so lets play the requested track.
+                await player.PlayAsync(track);
+            }
+            catch (Exception ex)
+            {
+                await LoggingService.LogInformationAsync("F command", $"{ex.Message}");
+                return;
+            }
+        }
+
 
         //Play with list of tracks
         public async Task<Embed> PlayAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel textChannel, string query)
@@ -197,7 +314,6 @@ namespace NMB.Services
 
                 await EmbedHandlingService.CreateListEmbed("Choose the track", tracksToShow, Color.Blue);
 
-
                 var track = tracks[int.Parse(choice)];
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
@@ -210,20 +326,17 @@ namespace NMB.Services
                 await player.PlayAsync(track);
                 await LoggingService.LogInformationAsync("Music", $"Bot Now Playing: {track.Title}\nUrl: {track.Url}");
                 return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {track.Title}\nUrl: {track.Url}", Color.Blue);
-
             }
             catch (Exception ex)
             {
                 return await EmbedHandlingService.CreateErrorEmbed("Music, Play", ex.Message);
             }
-
-
         }
-
 
         /*This is ran when a user uses the command Leave.
            Task Returns an Embed which is used in the command call. */
-        public async Task<Embed> LeaveAsync(IGuild guild)
+
+        public async Task LeaveAsync(IGuild guild, bool isF = false)
         {
             try
             {
@@ -238,19 +351,23 @@ namespace NMB.Services
 
                 //Leave the voice channel.
                 await _lavaNode.LeaveAsync(player.VoiceChannel);
+                if (isF)
+                    return;
+
 
                 await LoggingService.LogInformationAsync("Music", $"Bot has left.");
-                return await EmbedHandlingService.CreateBasicEmbed("Music", $"I've left. Thank you for playing moosik.", Color.Blue);
+                await EmbedHandlingService.CreateBasicEmbed("Music", $"I've left. Thank you for playing moosik.", Color.Blue);
             }
             //Tell the user about the error so they can report it back to us.
             catch (InvalidOperationException ex)
             {
-                return await EmbedHandlingService.CreateErrorEmbed("Music, Leave", ex.Message);
+                await EmbedHandlingService.CreateErrorEmbed("Music, Leave", ex.Message);
             }
         }
 
-        /*This is ran when a user uses the command List 
+        /*This is ran when a user uses the command List
             Task Returns an Embed which is used in the command call. */
+
         public async Task<Embed> ListAsync(IGuild guild)
         {
             try
@@ -293,11 +410,11 @@ namespace NMB.Services
             {
                 return await EmbedHandlingService.CreateErrorEmbed("Music, List", ex.Message);
             }
-
         }
 
-        /*This is ran when a user uses the command Skip 
+        /*This is ran when a user uses the command Skip
            Task Returns an Embed which is used in the command call. */
+
         public async Task<Embed> SkipTrackAsync(IGuild guild)
         {
             try
@@ -317,7 +434,6 @@ namespace NMB.Services
 
                     await LoggingService.LogInformationAsync("Music", $"Bot has stopped playback.");
                     return await EmbedHandlingService.CreateBasicEmbed("Music Skipped", "Track is skipped", Color.Blue);
-
                 }
                 else
                 {
@@ -334,7 +450,6 @@ namespace NMB.Services
                     {
                         return await EmbedHandlingService.CreateErrorEmbed("Music, Skip", ex.Message);
                     }
-
                 }
             }
             catch (Exception ex)
@@ -343,9 +458,9 @@ namespace NMB.Services
             }
         }
 
-
-        /*This is ran when a user uses the command Stop 
+        /*This is ran when a user uses the command Stop
     Task Returns an Embed which is used in the command call. */
+
         public async Task<Embed> StopAsync(IGuild guild)
         {
             try
@@ -370,8 +485,10 @@ namespace NMB.Services
                 return await EmbedHandlingService.CreateErrorEmbed("Music, Stop", ex.Message);
             }
         }
-        /*This is ran when a user uses the command Volume 
+
+        /*This is ran when a user uses the command Volume
         Task Returns a String which is used in the command call. */
+
         public async Task<string> SetVolumeAsync(IGuild guild, int volume)
         {
             if (volume > 150 || volume <= 0)
@@ -432,7 +549,7 @@ namespace NMB.Services
 
         public async Task TrackEnded(TrackEndedEventArgs args)
         {
-            if (args.Reason == TrackEndReason.Finished)
+            if (args.Reason == TrackEndReason.Stopped)
             {
                 return;
             }

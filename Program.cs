@@ -12,7 +12,7 @@ using Victoria;
 
 namespace NMB
 {
-    class Program
+    internal class Program
     {
         private DiscordSocketClient _client;
         private LavaNode _lavaNode;
@@ -38,7 +38,6 @@ namespace NMB
                 SubscribeDiscordEvents();
                 SubscribeLavaLinkEvents();
 
-
                 // Block this task until the program is closed.
                 await Task.Delay(Timeout.Infinite);
             }
@@ -49,29 +48,31 @@ namespace NMB
             _client.Ready += ReadyAsync;
             _client.Log += LogAsync;
         }
+
         private void SubscribeLavaLinkEvents()
         {
             _lavaNode.OnLog += LogAsync;
             _lavaNode.OnTrackEnded += _musicService.TrackEnded;
         }
+
         private async Task ReadyAsync()
         {
             try
             {
                 if (!_lavaNode.IsConnected)
                     await _lavaNode.ConnectAsync();
-
             }
             catch (Exception ex)
             {
                 await LoggingService.LogInformationAsync(ex.Source, ex.Message);
             }
-
         }
+
         private async Task LogAsync(LogMessage logMessage)
         {
             await LoggingService.LogAsync(logMessage.Source, logMessage.Severity, logMessage.Message);
         }
+
         private ServiceProvider ConfigureServices()
         {
             return new ServiceCollection()

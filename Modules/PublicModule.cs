@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 
@@ -10,7 +6,6 @@ namespace NMB.Modules
 {
     public class PublicModule : ModuleBase<SocketCommandContext>
     {
-
         [Command("ping")]
         [Alias("pong", "hello")]
         public Task PingAsync() => ReplyAsync("pong!", isTTS: true);
@@ -20,7 +15,7 @@ namespace NMB.Modules
         public Task ChoiceAsync([Remainder] string text) => ReplyAsync(text);
 
         [Command("last")]
-        public  async Task LastAsync(IUserMessage userMessage = null)
+        public async Task LastAsync(IUserMessage userMessage = null)
         {
             userMessage = userMessage ?? Context.Message;
             await ReplyAsync(userMessage.ToString());
@@ -47,7 +42,5 @@ namespace NMB.Modules
         [RequireContext(ContextType.Guild, ErrorMessage = "Sorry, this command must be ran from within a server, not a DM!")]
         public Task GuildOnlyCommand()
             => ReplyAsync("Nothing to see here!");
-
-
     }
 }

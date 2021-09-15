@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Addons.Interactive;
@@ -11,7 +9,7 @@ using NMB.Services;
 
 namespace NMB.Modules
 {
-    public class MusicModule : ModuleBase<SocketCommandContext>
+    public class MusicModule : InteractiveBase
     {
         public MusicService MusicService { get; set; }
 
@@ -22,20 +20,42 @@ namespace NMB.Modules
         [Command("Leave")]
         [Alias("Disconnect")]
         public async Task Leave()
-            => await ReplyAsync(embed: await MusicService.LeaveAsync(Context.Guild));
+            => await MusicService.LeaveAsync(Context.Guild);
 
-
-        [Command("fPlay")]
-        [Alias("fp")]
+        [Command("Play", RunMode = RunMode.Async)]
+        [Alias("p")]
         public async Task Play([Remainder] string search)
         {
-            await ReplyAsync(embed: await MusicService.FindTracksAsync(Context.User as SocketGuildUser, Context.Guild, Context.User as IVoiceState, Context.Channel as ITextChannel, search));
-
-            //await ReplyAsync(embed: await MusicService.PlayAsync(Context.User as SocketGuildUser, Context.Guild, Context.User as IVoiceState, Context.Channel as ITextChannel, search));
+            await ReplyAsync(embed: await MusicService.FindTracksAsync(search));
+            var response = await NextMessageAsync();
+            if (response != null)
+            {
+                if (int.TryParse(response.Content, out int responseInt) && responseInt > 0 && responseInt <= 5)
+                    await ReplyAsync(embed: await MusicService.PlayChosenTrackAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel, search, responseInt));
+                else
+                    await ReplyAsync(embed: await EmbedHandlingService.CreateErrorEmbed("Music, choice of", "Use int only in (0; 5] area"));
+            }
         }
 
-        [Command("Play")]
-        [Alias("p")]
+        [Command("f", RunMode = RunMode.Async)]
+        public async Task PressF()
+        {
+
+            await MusicService.PressFAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel);
+            await ReplyAsync("F");
+
+            var start = DateTime.Now;
+            var stop = DateTime.Now.AddSeconds(6);
+            int i = 0;
+
+            while (DateTime.Now <= stop)
+                i++;
+            await MusicService.LeaveAsync(Context.Guild, true);
+
+        }
+
+        [Command("FPlay")]
+        [Alias("fp")]
         public async Task ForcePlay([Remainder] string search)
             => await ReplyAsync(embed: await MusicService.ForcePlayAsync(Context.User as SocketGuildUser, Context.Guild, Context.User as IVoiceState, Context.Channel as ITextChannel, search));
 

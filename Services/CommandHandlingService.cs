@@ -42,11 +42,13 @@ namespace NMB.Services
             if (!(rawMessage is SocketUserMessage message)) return;
             if (message.Source != MessageSource.User) return;
 
-            // This value holds the offset where the prefix ends
+
             var argPos = 0;
-            // Perform prefix check. You may want to replace this with
-            // (!message.HasCharPrefix('!', ref argPos))
-            // for a more traditional command format like !help.
+            var t = new SocketCommandContext(_discord, message);
+            if (message.Content == "f" || message.Content == "F")
+                await _commands.ExecuteAsync(new SocketCommandContext(_discord, message), argPos, _services);
+
+          
             if (!message.HasCharPrefix('!', ref argPos)) return;
 
             var context = new SocketCommandContext(_discord, message);
@@ -71,7 +73,5 @@ namespace NMB.Services
             // the command failed, let's notify the user that something happened.
             await context.Channel.SendMessageAsync($"error: {result}");
         }
-
-
     }
 }
