@@ -3,9 +3,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 
-namespace NMB.Services
+namespace NMB.Handlers
 {
-    public static class EmbedHandlingService //Embed wrapper
+    public static class EmbedHandler //Embed wrapper
     {
         public static async Task<Embed> CreateBasicEmbed(string title, string description, Color color, string pictureUrl = null)
         {

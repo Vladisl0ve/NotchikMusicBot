@@ -4,6 +4,7 @@ using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
+using NMB.Handlers;
 using NMB.Services;
 using Victoria.Responses.Search;
 
@@ -40,7 +41,7 @@ namespace NMB.Modules
                 if (int.TryParse(response.Content, out int responseInt) && responseInt > 0 && responseInt <= 5)
                     await ReplyAsync(embed: await MusicService.PlayChosenTrackAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel, search, responseInt));
                 else
-                    await ReplyAsync(embed: await EmbedHandlingService.CreateErrorEmbed("Music, choice of", "Use int only in (0; 5] area"));
+                    await ReplyAsync(embed: await EmbedHandler.CreateErrorEmbed("Music, choice of", "Use int only in (0; 5] area"));
             }
         }
 

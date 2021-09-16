@@ -6,15 +6,15 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace NMB.Services
+namespace NMB.Handlers
 {
-    public class CommandHandlingService
+    public class CommandHandler
     {
         private readonly CommandService _commands;
         private readonly DiscordSocketClient _discord;
         private readonly IServiceProvider _services;
 
-        public CommandHandlingService(IServiceProvider services)
+        public CommandHandler(IServiceProvider services)
         {
             _commands = services.GetRequiredService<CommandService>();
             _discord = services.GetRequiredService<DiscordSocketClient>();
