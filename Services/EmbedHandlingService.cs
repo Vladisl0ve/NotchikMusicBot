@@ -7,12 +7,23 @@ namespace NMB.Services
 {
     public static class EmbedHandlingService //Embed wrapper
     {
-        public static async Task<Embed> CreateBasicEmbed(string title, string description, Color color)
+        public static async Task<Embed> CreateBasicEmbed(string title, string description, Color color, string pictureUrl = null)
         {
-            var embed = await Task.Run(() => (new EmbedBuilder()
-                .WithTitle(title)
-                .WithDescription(description)
-                .WithColor(color).Build()));
+            Embed embed;
+
+            if (pictureUrl != null)
+                embed = await Task.Run(() => (new EmbedBuilder()
+                                                .WithTitle(title)
+                                                .WithDescription(description)
+                                                .WithColor(color)
+                                                .WithImageUrl(pictureUrl)
+                                                .Build()));
+            else
+                embed = await Task.Run(() => (new EmbedBuilder()
+                                                .WithTitle(title)
+                                                .WithDescription(description)
+                                                .WithColor(color)
+                                                .Build()));
             return embed;
         }
 

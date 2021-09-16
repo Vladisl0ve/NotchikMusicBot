@@ -6,6 +6,7 @@ using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using NMB.Services;
+using Victoria.Responses.Search;
 
 namespace NMB.Modules
 {
@@ -26,6 +27,13 @@ namespace NMB.Modules
         [Alias("p")]
         public async Task Play([Remainder] string search)
         {
+            var searchResponse = await MusicService.FindPlaylistAsync(search);
+            if (searchResponse.Status == SearchStatus.PlaylistLoaded)
+            {
+                await ReplyAsync(embed: await MusicService.PlayPlaylistAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel, searchResponse));
+                return;
+            }
+
             await ReplyAsync(embed: await MusicService.FindTracksAsync(search));
             var response = await NextMessageAsync();
             if (response != null)
@@ -40,16 +48,16 @@ namespace NMB.Modules
         [Command("f", RunMode = RunMode.Async)]
         public async Task PressF()
         {
-
-            await MusicService.PressFAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel);
             await ReplyAsync("F");
+            await MusicService.PressFAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel);
+
 
             var start = DateTime.Now;
-            var stop = DateTime.Now.AddSeconds(6);
-            int i = 0;
+            var stop = DateTime.Now.AddSeconds(MusicService.durationTrackSeconds + 1);
 
-            while (DateTime.Now <= stop)
-                i++;
+            while (DateTime.Now < stop)
+            {
+            }
             await MusicService.LeaveAsync(Context.Guild, true);
 
         }
@@ -72,6 +80,11 @@ namespace NMB.Modules
         [Alias("s")]
         public async Task Skip()
             => await ReplyAsync(embed: await MusicService.SkipTrackAsync(Context.Guild));
+        [Command("Loop")]
+        [Alias("l")]
+        public async Task Loop() => await ReplyAsync(embed: await MusicService.LoopAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel));
+        [Command("Shuffle")]
+        public async Task Suffle() => await ReplyAsync(embed: await MusicService.ShuffleAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel));
 
         [Command("Volume")]
         [Alias("v")]
