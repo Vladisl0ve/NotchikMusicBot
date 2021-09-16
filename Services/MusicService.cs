@@ -341,6 +341,22 @@ namespace NMB.Services
             }
         }
 
+        public async Task<Embed> NowPlayingAsync(ITextChannel textChannel)
+        {
+            IGuild guild = textChannel.Guild;
+            if (_lavaNode.HasPlayer(guild))
+            {
+                var player = _lavaNode.GetPlayer(guild);
+
+                if (player.Track != null)
+                {
+                    return await EmbedHandler.CreateBasicEmbed("Now playing", $"Now Playing: {player.Track.Title}\n{player.Track.Position.ToString(@"hh\:mm\:ss")}/{player.Track.Duration} \nUrl: {player.Track.Url}", Color.Teal, player.Track.FetchArtworkAsync().Result);
+                }
+            }
+
+            return await EmbedHandler.CreateBasicEmbed("Now playing", "No tracks to play", Color.DarkBlue);
+        }
+
         public async Task<Embed> LoopAsync(SocketGuildUser user, IVoiceState voiceState, ITextChannel textChannel)
         {
             //Check If User Is Connected To Voice Cahnnel.
@@ -613,8 +629,22 @@ namespace NMB.Services
                         var currentTrack = player.Track;
                         if (previousTrack != null)
                             await LoggingService.LogInformationAsync("Music", $"Bot skipped: {previousTrack.Title}");
+                        ValueTask<string> tmp, tmp2;
                         if (currentTrack != null)
-                            return await EmbedHandler.CreateBasicEmbed("Music", $"Now Playing: {currentTrack.Title}\nUrl: {currentTrack.Url}\nLyrics: {currentTrack.FetchLyricsFromOvhAsync()}", Color.Blue, currentTrack.FetchArtworkAsync().Result);
+                        {
+                            try
+                            {
+
+                                 tmp = currentTrack.FetchLyricsFromOvhAsync();
+                                 tmp2 = currentTrack.FetchLyricsFromGeniusAsync();
+                            }
+                            catch(Exception ex)
+                            {
+                                return await EmbedHandler.CreateErrorEmbed("Music, Skip", ex.Message);
+                            }
+
+                            return await EmbedHandler.CreateBasicEmbed("Music", $"Now Playing: **{currentTrack.Title}**\nUrl: {currentTrack.Url}\nLyrics: {currentTrack.FetchLyricsFromOvhAsync()}", Color.Blue, currentTrack.FetchArtworkAsync().Result);
+                        }
                         else
                             return await EmbedHandler.CreateBasicEmbed("Music", $"That song is really good, yeah", Color.Orange);
                     }
@@ -770,7 +800,7 @@ namespace NMB.Services
 
             await args.Player.PlayAsync(track);
             await args.Player.TextChannel.SendMessageAsync(
-                embed: await EmbedHandler.CreateBasicEmbed("Now Playing", $"[{track.Title}]({track.Url})", Color.Blue));
+                embed: await EmbedHandler.CreateBasicEmbed("Now Playing", $"[{track.Title}]({track.Url})", Color.Blue, track.FetchArtworkAsync().Result));
         }
     }
 }

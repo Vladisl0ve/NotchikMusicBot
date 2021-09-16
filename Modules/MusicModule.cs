@@ -23,6 +23,10 @@ namespace NMB.Modules
         public async Task Leave()
             => await MusicService.LeaveAsync(Context.Guild);
 
+        [Command("NowPlaying")]
+        [Alias("np")]
+        public async Task NowPlaying() => await ReplyAsync(embed: await MusicService.NowPlayingAsync(Context.Channel as ITextChannel));
+
         [Command("Play", RunMode = RunMode.Async)]
         [Alias("p")]
         public async Task Play([Remainder] string search)
