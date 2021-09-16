@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Addons.Interactive;
@@ -51,7 +50,6 @@ namespace NMB.Modules
             await ReplyAsync("F");
             await MusicService.PressFAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel);
 
-
             var start = DateTime.Now;
             var stop = DateTime.Now.AddSeconds(MusicService.durationTrackSeconds + 1);
 
@@ -59,7 +57,6 @@ namespace NMB.Modules
             {
             }
             await MusicService.LeaveAsync(Context.Guild, true);
-
         }
 
         [Command("FPlay")]
@@ -80,9 +77,11 @@ namespace NMB.Modules
         [Alias("s")]
         public async Task Skip()
             => await ReplyAsync(embed: await MusicService.SkipTrackAsync(Context.Guild));
+
         [Command("Loop")]
         [Alias("l")]
         public async Task Loop() => await ReplyAsync(embed: await MusicService.LoopAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel));
+
         [Command("Shuffle")]
         public async Task Suffle() => await ReplyAsync(embed: await MusicService.ShuffleAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel));
 

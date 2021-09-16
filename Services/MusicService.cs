@@ -122,7 +122,7 @@ namespace NMB.Services
                 //Player was not playing anything, so lets play the requested track.
                 await player.PlayAsync(track);
                 await LoggingService.LogInformationAsync("Music", $"Bot Now Playing: {track.Title}\nUrl: {track.Url}");
-                return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {track.Title}\nUrl: {track.Url}", Color.Blue);
+                return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {track.Title}\nUrl: {track.Url}", Color.Blue, track.FetchArtworkAsync().Result);
             }
 
             //If after all the checks we did, something still goes wrong. Tell the user about it so they can report it back to us.
@@ -131,6 +131,7 @@ namespace NMB.Services
                 return await EmbedHandlingService.CreateErrorEmbed("Music, Play", ex.Message);
             }
         }
+
         public async Task<SearchResponse> FindPlaylistAsync(string query)
         {
             var search = Uri.IsWellFormedUriString(query, UriKind.Absolute) ?
@@ -169,6 +170,7 @@ namespace NMB.Services
 
             return await EmbedHandlingService.CreateListEmbed("Choose the track", tracksToShow, Color.Blue);
         }
+
         public async Task<Embed> PlayPlaylistAsync(SocketGuildUser user, IVoiceState voiceState, ITextChannel textChannel, SearchResponse search)
         {
             if (user.VoiceChannel == null)
@@ -211,9 +213,8 @@ namespace NMB.Services
                     player.Queue.Enqueue(tracks);
                     await player.PlayAsync(firstTrack);
                     await LoggingService.LogInformationAsync("Music", $"Bot Now Playing: {firstTrack.Title}\nUrl: {firstTrack.Url}");
-                    return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {firstTrack.Title}\nUrl: {firstTrack.Url}", Color.Blue);
+                    return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {firstTrack.Title}\nUrl: {firstTrack.Url}", Color.Blue, firstTrack.FetchArtworkAsync().Result);
                 }
-
             }
             catch (Exception ex)
             {
@@ -223,8 +224,6 @@ namespace NMB.Services
 
         public async Task<Embed> PlayChosenTrackAsync(SocketGuildUser user, IVoiceState voiceState, ITextChannel textChannel, string query, int numberOfTrack)
         {
-
-
             //Check If User Is Connected To Voice Cahnnel.
             if (user.VoiceChannel == null)
             {
@@ -275,7 +274,7 @@ namespace NMB.Services
                 //Player was not playing anything, so lets play the requested track.
                 await player.PlayAsync(track);
                 await LoggingService.LogInformationAsync("Music", $"Bot Now Playing: {track.Title}\nUrl: {track.Url}");
-                return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {track.Title}\nUrl: {track.Url}", Color.Blue);
+                return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {track.Title}\nUrl: {track.Url}", Color.Blue, track.FetchArtworkAsync().Result);
             }
             catch (Exception ex)
             {
@@ -285,7 +284,6 @@ namespace NMB.Services
 
         public async Task PressFAsync(SocketGuildUser user, IVoiceState voiceState, ITextChannel textChannel, string query = "https://www.youtube.com/watch?v=0s9P1IFxJ0Y")
         {
-
             //Check If User Is Connected To Voice Cahnnel.
             if (user.VoiceChannel == null)
             {
@@ -385,13 +383,13 @@ namespace NMB.Services
                     return await EmbedHandlingService.CreateBasicEmbed("Music", $"Looped on track: {trackForLoop.Title}\n URL: {trackForLoop.Url}", Color.Gold);
                 }
                 return await EmbedHandlingService.CreateErrorEmbed("Loop", "Nothing to loop");
-
             }
             catch (Exception ex)
             {
                 return await EmbedHandlingService.CreateErrorEmbed("Music, Play", ex.Message);
             }
         }
+
         public async Task<Embed> ShuffleAsync(SocketGuildUser user, IVoiceState voiceState, ITextChannel textChannel)
         {
             //Check If User Is Connected To Voice Cahnnel.
@@ -422,7 +420,6 @@ namespace NMB.Services
                 player.Queue.Shuffle();
 
                 return await EmbedHandlingService.CreateBasicEmbed("Shuffle", "Shuffled successfully", Color.Green);
-
             }
             catch (Exception ex)
             {
@@ -490,7 +487,7 @@ namespace NMB.Services
                 //Player was not playing anything, so lets play the requested track.
                 await player.PlayAsync(track);
                 await LoggingService.LogInformationAsync("Music", $"Bot Now Playing: {track.Title}\nUrl: {track.Url}");
-                return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {track.Title}\nUrl: {track.Url}", Color.Blue);
+                return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {track.Title}\nUrl: {track.Url}", Color.Blue, track.FetchArtworkAsync().Result);
             }
             catch (Exception ex)
             {
@@ -547,7 +544,7 @@ namespace NMB.Services
                         In this situation we simply return an embed that displays the current track instead. */
                     if (player.Queue.Count < 1 && player.Track != null)
                     {
-                        return await EmbedHandlingService.CreateBasicEmbed($"Now Playing: {player.Track.Title}", "Nothing Else Is Queued.", Color.Blue);
+                        return await EmbedHandlingService.CreateBasicEmbed($"Now Playing: {player.Track.Title}", "Nothing Else Is Queued.", Color.Blue, player.Track.FetchArtworkAsync().Result);
                     }
                     else
                     {
@@ -567,7 +564,7 @@ namespace NMB.Services
                                 break;
                             }
                         }
-                        return await EmbedHandlingService.CreateBasicEmbed("Music Playlist", $"Now Playing: [{player.Track.Title}]({player.Track.Url}) \n{descriptionBuilder}", Color.Blue);
+                        return await EmbedHandlingService.CreateBasicEmbed("Music Playlist", $"Now Playing: [{player.Track.Title}]({player.Track.Url}) \n{descriptionBuilder}", Color.Blue, player.Track.FetchArtworkAsync().Result);
                     }
                 }
                 else
@@ -619,7 +616,6 @@ namespace NMB.Services
                             return await EmbedHandlingService.CreateBasicEmbed("Music", $"Now Playing: {currentTrack.Title}\nUrl: {currentTrack.Url}\nLyrics: {currentTrack.FetchLyricsFromOvhAsync()}", Color.Blue, currentTrack.FetchArtworkAsync().Result);
                         else
                             return await EmbedHandlingService.CreateBasicEmbed("Music", $"That song is really good, yeah", Color.Orange);
-
                     }
                     catch (Exception ex)
                     {
@@ -758,7 +754,6 @@ namespace NMB.Services
 
             if (!args.Player.Queue.TryDequeue(out var queueable))
             {
-
                 await args.Player.TextChannel.SendMessageAsync(
                     embed: await EmbedHandlingService.CreateBasicEmbed("Playlist", $"Playback is finished", Color.Green));
                 return;

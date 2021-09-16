@@ -21,7 +21,6 @@ namespace NMB.Modules
             await ReplyAsync(userMessage.ToString());
         }
 
-
         // Get info on a user, or the user who invoked the command if one is not specified
         [Command("userinfo")]
         public async Task UserInfoAsync(IUser user = null)

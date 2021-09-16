@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -42,13 +39,11 @@ namespace NMB.Services
             if (!(rawMessage is SocketUserMessage message)) return;
             if (message.Source != MessageSource.User) return;
 
-
             var argPos = 0;
             var t = new SocketCommandContext(_discord, message);
             if (message.Content == "f" || message.Content == "F")
                 await _commands.ExecuteAsync(new SocketCommandContext(_discord, message), argPos, _services);
 
-          
             if (!message.HasCharPrefix('!', ref argPos)) return;
 
             var context = new SocketCommandContext(_discord, message);
