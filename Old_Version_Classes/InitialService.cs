@@ -1,18 +1,6 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Discord;
-using Discord.Addons.Interactive;
-using Discord.Commands;
-using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
-using NMB.Handlers;
-using Victoria;
-
-namespace NMB.Services
+﻿namespace NMB.Services
 {
-    public class InitialService
+    /*public class InitialService
     {
         private DiscordSocketClient _client;
         private ServiceProvider _services;
@@ -39,7 +27,6 @@ namespace NMB.Services
             await _globalData.InitializeAsync();
             await _client.LoginAsync(TokenType.Bot, GlobalData.Config.DiscordToken);
             await _client.StartAsync();
-            await _commandHandler.InitializeAsync();
 
             // Block this task until the program is closed.
             await Task.Delay(Timeout.Infinite);
@@ -54,7 +41,7 @@ namespace NMB.Services
         private void SubscribeLavaLinkEvents()
         {
             _lavaNode.OnLog += LogAsync;
-            _lavaNode.OnTrackEnded += _musicService.TrackEnded;
+            //_lavaNode.OnTrackEnded += _musicService.TrackEnded;
         }
 
         private async Task ReadyAsync()
@@ -75,9 +62,6 @@ namespace NMB.Services
         private async Task LogAsync(LogMessage logMessage)
         {
             await LoggingService.LogAsync(logMessage.Source, logMessage.Severity, logMessage.Message);
-            ActivityType actType = (ActivityType)(DateTime.Now.Ticks % 4);
-
-            await _client.SetGameAsync(GlobalData.Config.ActivityName, type: actType);
         }
 
         private ServiceProvider ConfigureServices()
@@ -97,5 +81,5 @@ namespace NMB.Services
                 .AddSingleton<MusicService>()
                 .BuildServiceProvider();
         }
-    }
+    }*/
 }
