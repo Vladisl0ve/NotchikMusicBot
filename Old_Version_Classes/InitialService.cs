@@ -12,7 +12,7 @@ using Victoria;
 
 namespace NMB.Services
 {
-    public class InitialService
+    /*public class InitialService
     {
         private DiscordSocketClient _client;
         private ServiceProvider _services;
@@ -53,7 +53,7 @@ namespace NMB.Services
         private void SubscribeLavaLinkEvents()
         {
             _lavaNode.OnLog += LogAsync;
-            _lavaNode.OnTrackEnded += _musicService.TrackEnded;
+            //_lavaNode.OnTrackEnded += _musicService.TrackEnded;
         }
 
         private async Task ReadyAsync()
@@ -93,5 +93,5 @@ namespace NMB.Services
                 .AddSingleton<MusicService>()
                 .BuildServiceProvider();
         }
-    }
+    }*/
 }

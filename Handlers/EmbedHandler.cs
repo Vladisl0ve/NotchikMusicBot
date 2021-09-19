@@ -30,7 +30,7 @@ namespace NMB.Handlers
         public static async Task<Embed> CreateErrorEmbed(string source, string error)
         {
             var embed = await Task.Run(() => new EmbedBuilder()
-                .WithTitle($"ERROR OCCURED FROM - {source}")
+                .WithTitle($"ERROR - {source}")
                 .WithDescription($"**Error Details**: \n{error}")
                 .WithColor(Color.DarkRed).Build());
             return embed;

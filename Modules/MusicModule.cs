@@ -10,7 +10,7 @@ using Victoria.Responses.Search;
 
 namespace NMB.Modules
 {
-    /*public class MusicModule : InteractiveBase
+    public class MusicModule : InteractiveBase
     {
         public MusicService MusicService { get; set; }
 
@@ -31,19 +31,21 @@ namespace NMB.Modules
         [Alias("p")]
         public async Task Play([Remainder] string search)
         {
-            var searchResponse = await MusicService.FindPlaylistAsync(search);
+            var searchResponse = await MusicService.FindTracksAsync(search);
             if (searchResponse.Status == SearchStatus.PlaylistLoaded)
             {
-                await ReplyAsync(embed: await MusicService.PlayPlaylistAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel, searchResponse));
+                await MusicService.PlayPlaylistAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, searchResponse);
                 return;
             }
 
-            await ReplyAsync(embed: await MusicService.FindTracksAsync(search));
+            if (!MusicService.TrackChoiceAsync(Context.Channel as ITextChannel, searchResponse).Result)
+                return;
+
             var response = await NextMessageAsync();
             if (response != null)
             {
                 if (int.TryParse(response.Content, out int responseInt) && responseInt > 0 && responseInt <= 5)
-                    await ReplyAsync(embed: await MusicService.PlayChosenTrackAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel, search, responseInt));
+                    await MusicService.ForcePlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, searchResponse: searchResponse, numberOfTrack: responseInt);
                 else
                     await ReplyAsync(embed: await EmbedHandler.CreateErrorEmbed("Music, choice of", "Use int only in (0; 5] area"));
             }
@@ -53,7 +55,7 @@ namespace NMB.Modules
         public async Task PressF()
         {
             await ReplyAsync("F");
-            await MusicService.PressFAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel);
+            await MusicService.SoundPressFAsync(Context.User as SocketGuildUser,  Context.Channel as ITextChannel);
 
             var start = DateTime.Now;
             var stop = DateTime.Now.AddSeconds(MusicService.durationTrackSeconds + 1);
@@ -67,7 +69,7 @@ namespace NMB.Modules
         [Command("FPlay")]
         [Alias("fp")]
         public async Task ForcePlay([Remainder] string search)
-            => await ReplyAsync(embed: await MusicService.ForcePlayAsync(Context.User as SocketGuildUser, Context.Guild, Context.User as IVoiceState, Context.Channel as ITextChannel, search));
+            => await MusicService.ForcePlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, search);
 
         [Command("Stop")]
         public async Task Stop()
@@ -85,10 +87,10 @@ namespace NMB.Modules
 
         [Command("Loop")]
         [Alias("l")]
-        public async Task Loop() => await ReplyAsync(embed: await MusicService.LoopAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel));
+        public async Task Loop() =>await MusicService.LoopAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel);
 
         [Command("Shuffle")]
-        public async Task Suffle() => await ReplyAsync(embed: await MusicService.ShuffleAsync(Context.User as SocketGuildUser, Context.User as IVoiceState, Context.Channel as ITextChannel));
+        public async Task Suffle() => await MusicService.ShuffleAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel);
 
         [Command("Volume")]
         [Alias("v")]
@@ -97,10 +99,10 @@ namespace NMB.Modules
 
         [Command("Pause")]
         public async Task Pause()
-            => await ReplyAsync(await MusicService.PauseAsync(Context.Guild));
+            => await ReplyAsync(embed: await MusicService.PauseAsync(Context.Guild));
 
         [Command("Resume")]
         public async Task Resume()
-            => await ReplyAsync(await MusicService.ResumeAsync(Context.Guild));
-    }*/
+            => await ReplyAsync(embed: await MusicService.ResumeAsync(Context.Guild));
+    }
 }
