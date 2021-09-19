@@ -501,7 +501,7 @@ namespace NMB.Services
                         await player.StopAsync();
                     }
 
-                    Log.Information("Bots skipped last track");
+                    Log.Information("Bot skipped last track");
                     await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music Skipped", "Track is skipped", Color.Gold));
                 }
                 else
@@ -509,7 +509,7 @@ namespace NMB.Services
                     try
                     {
                         await player.SkipAsync();
-                        Log.Information("Bots skipped track");
+                        Log.Information("Bot skipped track");
                     }
                     catch (Exception ex)
                     {
@@ -630,7 +630,7 @@ namespace NMB.Services
 
                 case TrackEndReason.Finished:
                     //await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track's ended", Color.Green));
-                    Log.Information($"Track **{track}** ended");
+                   // Log.Information($"Track **{track}** ended");
                     break;
 
                 case TrackEndReason.LoadFailed:
@@ -640,12 +640,12 @@ namespace NMB.Services
 
                 case TrackEndReason.Replaced:
                     await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track **{track}** has been replaced by new one", Color.Orange));
-                    Log.Information($"Track **{track}** has been replaced");
+                    //Log.Information($"Track **{track}** has been replaced");
                     return;
 
                 case TrackEndReason.Stopped:
                     await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track **{track}** stopped", Color.Green));
-                    Log.Information($"Track **{track}** stopped");
+                   // Log.Information($"Track **{track}** stopped");
                     break;
             }
 
