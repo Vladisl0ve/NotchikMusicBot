@@ -10,7 +10,7 @@ using Victoria.Responses.Search;
 
 namespace NMB.Modules
 {
-    public class MusicModule : InteractiveBase
+    /*public class MusicModule : InteractiveBase
     {
         public MusicService MusicService { get; set; }
 
@@ -102,5 +102,5 @@ namespace NMB.Modules
         [Command("Resume")]
         public async Task Resume()
             => await ReplyAsync(await MusicService.ResumeAsync(Context.Guild));
-    }
+    }*/
 }

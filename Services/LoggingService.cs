@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Discord;
+using Newtonsoft.Json;
+using NMB.DataStructs.Deserializers;
 
 namespace NMB.Services
 {
@@ -15,6 +17,13 @@ namespace NMB.Services
             await Append($"{GetSeverityString(severity)}", GetConsoleColor(severity));
             await Append($" [{SourceToString(src)}] ", ConsoleColor.DarkGray);
             await Append($"{DateTime.Now.ToString("T")} ", ConsoleColor.Gray);
+
+            if (severity == LogSeverity.Debug && src == "Victoria")
+            {
+                DebugLog msg = JsonConvert.DeserializeObject<DebugLog>(message);
+                if (msg != null)
+                    message = msg.ToString();
+            }
 
             if (!string.IsNullOrWhiteSpace(message))
                 await Append($"{message}\n", ConsoleColor.White);

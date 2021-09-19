@@ -26,11 +26,11 @@ namespace NMB.Services
         private SearchResponse playlistForLoop = new SearchResponse();
         private LavaTrack trackForLoop = null;
 
-        public MusicService(LavaNode lavaNode, DiscordSocketClient client)
+/*        public MusicService(LavaNode lavaNode, DiscordSocketClient client)
         {
             _lavaNode = lavaNode;
             _client = client;
-        }
+        }*/
 
         private Task ChoiceReceived(SocketMessage rawMessage)
         {
@@ -629,21 +629,9 @@ namespace NMB.Services
                         var currentTrack = player.Track;
                         if (previousTrack != null)
                             await LoggingService.LogInformationAsync("Music", $"Bot skipped: {previousTrack.Title}");
-                        ValueTask<string> tmp, tmp2;
                         if (currentTrack != null)
                         {
-                            try
-                            {
-
-                                 tmp = currentTrack.FetchLyricsFromOvhAsync();
-                                 tmp2 = currentTrack.FetchLyricsFromGeniusAsync();
-                            }
-                            catch(Exception ex)
-                            {
-                                return await EmbedHandler.CreateErrorEmbed("Music, Skip", ex.Message);
-                            }
-
-                            return await EmbedHandler.CreateBasicEmbed("Music", $"Now Playing: **{currentTrack.Title}**\nUrl: {currentTrack.Url}\nLyrics: {currentTrack.FetchLyricsFromOvhAsync()}", Color.Blue, currentTrack.FetchArtworkAsync().Result);
+                            return await EmbedHandler.CreateBasicEmbed("Music", $"Now Playing: **{currentTrack.Title}**\nUrl: {currentTrack.Url}", Color.Blue, currentTrack.FetchArtworkAsync().Result);
                         }
                         else
                             return await EmbedHandler.CreateBasicEmbed("Music", $"That song is really good, yeah", Color.Orange);
@@ -756,11 +744,6 @@ namespace NMB.Services
 
         public async Task TrackEnded(TrackEndedEventArgs args)
         {
-            if (args.Reason == TrackEndReason.LoadFailed)
-            {
-                return;
-            }
-
             if (args.Track.Id == "0s9P1IFxJ0Y") //id of 'YOU FUCKING DEAD'
                 return;
 
