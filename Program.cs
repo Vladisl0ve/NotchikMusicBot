@@ -20,7 +20,6 @@ namespace NMB
     {
         public static void Main(string[] args)
         {
-            //=> new InitialService().InitializeAsync();
             CreateGlobalLoggerConfiguration();
             Log.Information("Starting host");
             CreateHostBuilder(args).Build().Run();
@@ -65,7 +64,6 @@ namespace NMB
                         .AddHostedService<CommandHandler>()
                         .AddSingleton<HttpClient>()
                         .AddSingleton<InteractiveService>()
-                        .AddSingleton<GlobalData>()
                         .AddSingleton<MusicService>()
                         .AddLavaNode(x =>
                         {

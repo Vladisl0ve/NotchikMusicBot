@@ -1,12 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
-using Newtonsoft.Json;
-using NMB.DataStructs.Deserializers;
-
-namespace NMB.Services
+﻿namespace NMB.Services
 {
     #region Logger
+
     /* public class LoggingService
      {
          public static async Task LogAsync(string src, LogSeverity severity, string message, Exception exception = null)
@@ -153,5 +148,6 @@ namespace NMB.Services
              }
          }
      }*/
-    #endregion
+
+    #endregion Logger
 }

@@ -67,21 +67,27 @@ namespace NMB.Services
                 case LogSeverity.Critical:
                     Log.Fatal(ex, message);
                     break;
+
                 case LogSeverity.Error:
                     Log.Error(ex, message);
                     break;
+
                 case LogSeverity.Warning:
                     Log.Warning(ex, message);
                     break;
+
                 case LogSeverity.Info:
                     Log.Information(ex, message);
                     break;
+
                 case LogSeverity.Verbose:
                     Log.Verbose(ex, message);
                     break;
+
                 case LogSeverity.Debug:
                     Log.Debug(ex, message);
                     break;
+
                 default:
                     Log.Fatal("LogMS is down");
                     break;
@@ -274,7 +280,6 @@ namespace NMB.Services
             if (user.VoiceChannel == null)
                 return;
 
-
             IGuild guild = voiceState.VoiceChannel.Guild;
             if (!CheckIsPlayerJoined(guild, voiceState, textChannel).Result)
                 return;
@@ -339,12 +344,19 @@ namespace NMB.Services
                 //Get the player for that guild.
                 var player = _lavaNode.GetPlayer(guild);
 
+                if (player.Track == null)
+                {
+                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Nothing is playing", Color.Gold));
+                    return;
+                }
+
                 if (playlistForLoop.Tracks != null)
                 {
                     isLoopedPlaylist = true;
                     isLoopedTrack = false;
                     Log.Information($"Playlist {playlistForLoop.Playlist.Name} looped");
                     await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Looped on playlist: {playlistForLoop.Playlist.Name}", Color.Gold));
+                    return;
                 }
 
                 if (trackForLoop != null)
@@ -353,6 +365,7 @@ namespace NMB.Services
                     isLoopedPlaylist = false;
                     Log.Information($"Track {trackForLoop.Title} looped");
                     await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Looped on track: {trackForLoop.Title}\n URL: {trackForLoop.Url}", Color.Gold));
+                    return;
                 }
                 await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("Loop", "Nothing to loop"));
             }
@@ -432,7 +445,6 @@ namespace NMB.Services
                 {
                     if (player.Queue.Count < 1 && player.Track != null)
                     {
-
                         return await EmbedHandler.CreateBasicEmbed($"Now Playing: {player.Track.Title}", "Nothing Else Is Queued.", Color.Blue, player.Track.FetchArtworkAsync().Result);
                     }
                     else
@@ -455,7 +467,7 @@ namespace NMB.Services
                 }
                 else
                 {
-                    return await EmbedHandler.CreateErrorEmbed("Music, List", "Player doesn't seem to be playing anything right now.");
+                    return await EmbedHandler.CreateBasicEmbed("List", "Playlist is empty", Color.Magenta);
                 }
             }
             catch (Exception ex)
@@ -464,51 +476,52 @@ namespace NMB.Services
                 return await EmbedHandler.CreateErrorEmbed("Music, List", ex.Message);
             }
         }
-        public async Task<Embed> SkipTrackAsync(IGuild guild)
+
+        public async Task SkipTrackAsync(IGuild guild, ITextChannel textChannel)
         {
             try
             {
                 LavaPlayer player = null;
                 if (!_lavaNode.TryGetPlayer(guild, out player))
-                    return await EmbedHandler.CreateErrorEmbed("List", $"Could not aquire player");
+                {
+                    Log.Error("Could not aquire player");
+                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("List", $"Could not aquire player"));
+                }
 
                 if (player.Queue.Count < 1)
                 {
+                    if (player.Track == null)
+                    {
+                        await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music Skipped", "Nothing to skip", Color.Gold));
+                        return;
+                    }
+
                     if (player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                     {
                         await player.StopAsync();
                     }
 
                     Log.Information("Bots skipped last track");
-                    return await EmbedHandler.CreateBasicEmbed("Music Skipped", "Track is skipped", Color.Blue);
+                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music Skipped", "Track is skipped", Color.Gold));
                 }
                 else
                 {
                     try
                     {
-                        var previousTrack = player.Track;
                         await player.SkipAsync();
-                        var currentTrack = player.Track;
-                        if (previousTrack != null)
-                            Log.Information($"Bot skipped: {previousTrack.Title}");
-                        if (currentTrack != null)
-                        {
-                            return await EmbedHandler.CreateBasicEmbed("Skip", $"Now Playing: **{currentTrack.Title}**\nUrl: {currentTrack.Url}", Color.Blue, currentTrack.FetchArtworkAsync().Result);
-                        }
-                        else
-                            return await EmbedHandler.CreateBasicEmbed("Skip", $"That song is really good, yeah", Color.Orange);
+                        Log.Information("Bots skipped track");
                     }
                     catch (Exception ex)
                     {
                         Log.Error(ex, ex.Message);
-                        return await EmbedHandler.CreateErrorEmbed("Skip", ex.Message);
+                        await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("Skip", ex.Message));
                     }
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(ex, ex.Message);
-                return await EmbedHandler.CreateErrorEmbed("Skip", ex.Message);
+                await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("Skip", ex.Message));
             }
         }
 
@@ -519,7 +532,7 @@ namespace NMB.Services
                 var player = _lavaNode.GetPlayer(guild);
 
                 if (player == null)
-                    return await EmbedHandler.CreateErrorEmbed("Music, List", $"Could not aquire player");
+                    return await EmbedHandler.CreateErrorEmbed("Stop", $"Could not aquire player");
 
                 if (player.PlayerState is PlayerState.Playing)
                 {
@@ -613,25 +626,45 @@ namespace NMB.Services
                 case TrackEndReason.Cleanup:
                     //await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Tracks have been cleaned up", Color.Red));
                     Log.Warning($"Track **{track}** has been cleaned up");
-                    return;
+                    break;
+
                 case TrackEndReason.Finished:
                     //await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track's ended", Color.Green));
                     Log.Information($"Track **{track}** ended");
-                    return;
+                    break;
+
                 case TrackEndReason.LoadFailed:
                     await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track **{track}** load failed", Color.DarkRed));
                     Log.Error($"Track **{track}** load failed");
-                    return;
+                    break;
+
                 case TrackEndReason.Replaced:
                     await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track **{track}** has been replaced by new one", Color.Orange));
                     Log.Information($"Track **{track}** has been replaced");
                     return;
+
                 case TrackEndReason.Stopped:
                     await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track **{track}** stopped", Color.Green));
                     Log.Information($"Track **{track}** stopped");
-                    return;
+                    break;
             }
+
+            if (!args.Player.Queue.Any())
+            {
+                if (isLoopedPlaylist)
+                    args.Player.Queue.Enqueue(playlistForLoop.Tracks);
+                if (isLoopedTrack)
+                    args.Player.Queue.Enqueue(trackForLoop);
+            }
+
+            LavaTrack nextTrack = null;
+            if (args.Player.Queue.TryDequeue(out nextTrack))
+            {
+                await args.Player.PlayAsync(nextTrack);
+            }
+
             #region previous_version
+
             /*
                         var currentTrack = args.Player.Queue.FirstOrDefault();
                         if (args.Reason == TrackEndReason.Replaced && currentTrack != null)
@@ -671,7 +704,8 @@ namespace NMB.Services
                         await args.Player.TextChannel.SendMessageAsync(
                             embed: await EmbedHandler.CreateBasicEmbed("Now Playing", $"[{track.Title}]({track.Url})", Color.Blue, track.FetchArtworkAsync().Result));
                    */
-            #endregion
+
+            #endregion previous_version
         }
     }
 }

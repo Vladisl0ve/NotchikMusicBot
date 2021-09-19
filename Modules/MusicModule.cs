@@ -55,7 +55,7 @@ namespace NMB.Modules
         public async Task PressF()
         {
             await ReplyAsync("F");
-            await MusicService.SoundPressFAsync(Context.User as SocketGuildUser,  Context.Channel as ITextChannel);
+            await MusicService.SoundPressFAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel);
 
             var start = DateTime.Now;
             var stop = DateTime.Now.AddSeconds(MusicService.durationTrackSeconds + 1);
@@ -83,11 +83,11 @@ namespace NMB.Modules
         [Command("Skip")]
         [Alias("s")]
         public async Task Skip()
-            => await ReplyAsync(embed: await MusicService.SkipTrackAsync(Context.Guild));
+            => await MusicService.SkipTrackAsync(Context.Guild, Context.Channel as ITextChannel);
 
         [Command("Loop")]
         [Alias("l")]
-        public async Task Loop() =>await MusicService.LoopAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel);
+        public async Task Loop() => await MusicService.LoopAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel);
 
         [Command("Shuffle")]
         public async Task Suffle() => await MusicService.ShuffleAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel);

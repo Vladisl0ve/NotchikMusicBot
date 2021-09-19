@@ -19,19 +19,16 @@ namespace NMB.Handlers
         private readonly IServiceProvider _services;
         private readonly IConfiguration _config;
 
-
         public CommandHandler(IServiceProvider services, DiscordSocketClient client, ILogger<CommandHandler> logger) : base(client, logger)
         {
             _commands = services.GetRequiredService<CommandService>();
             _discord = services.GetRequiredService<DiscordSocketClient>();
             _services = services;
             _config = services.GetRequiredService<IConfiguration>();
-
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-
             _commands.CommandExecuted += CommandExecutedAsync;
             _discord.MessageReceived += MessageReceivedAsync;
 

@@ -1,16 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Discord;
-using Discord.Addons.Interactive;
-using Discord.Commands;
-using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
-using NMB.Handlers;
-using Victoria;
-
-namespace NMB.Services
+﻿namespace NMB.Services
 {
     /*public class InitialService
     {
