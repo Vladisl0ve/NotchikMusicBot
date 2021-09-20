@@ -6,6 +6,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using NMB.Handlers;
 using NMB.Services;
+using Victoria;
 using Victoria.Responses.Search;
 
 namespace NMB.Modules
@@ -13,6 +14,7 @@ namespace NMB.Modules
     public class MusicModule : InteractiveBase
     {
         public MusicService MusicService { get; set; }
+        public LavaNode _lavaNode { get; set; }
 
         [Command("Join")]
         public async Task JoinAndPlay()
@@ -45,7 +47,7 @@ namespace NMB.Modules
             if (response != null)
             {
                 if (int.TryParse(response.Content, out int responseInt) && responseInt > 0 && responseInt <= 5)
-                    await MusicService.ForcePlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, searchResponse: searchResponse, numberOfTrack: responseInt);
+                    await MusicService.PlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, searchResponse: searchResponse, numberOfTrack: responseInt);
                 else
                     await ReplyAsync(embed: await EmbedHandler.CreateErrorEmbed("Music, choice of", "Use int only in (0; 5] area"));
             }
@@ -57,19 +59,17 @@ namespace NMB.Modules
             await ReplyAsync("F");
             await MusicService.SoundPressFAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel);
 
-            var start = DateTime.Now;
-            var stop = DateTime.Now.AddSeconds(MusicService.durationTrackSeconds + 1);
+            if (!_lavaNode.TryGetPlayer(Context.Guild, out LavaPlayer player))
+                return;
 
-            while (DateTime.Now < stop)
-            {
-            }
+            await Task.Delay(player.Track.Duration.Add(new TimeSpan(0, 0, 1)));
             await MusicService.LeaveAsync(Context.Guild, true);
         }
 
         [Command("FPlay")]
         [Alias("fp")]
         public async Task ForcePlay([Remainder] string search)
-            => await MusicService.ForcePlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, search);
+            => await MusicService.PlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, search);
 
         [Command("Stop")]
         public async Task Stop()

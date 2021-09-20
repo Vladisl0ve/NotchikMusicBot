@@ -67,7 +67,7 @@ namespace NMB
                         .AddSingleton<MusicService>()
                         .AddLavaNode(x =>
                         {
-                            x.SelfDeaf = true;
+                            x.SelfDeaf = true;                           
                         })
                         ;
                     });

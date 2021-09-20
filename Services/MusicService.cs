@@ -18,12 +18,12 @@ namespace NMB.Services
     {
         private readonly LavaNode _lavaNode;
         private readonly DiscordSocketClient _client;
-        public bool isPlaying => _lavaNode.Players.Any(p => p.Track != null);
-        public double durationTrackSeconds => isPlaying ? _lavaNode.Players.First().Track.Duration.TotalSeconds : 0;
-        public bool isLoopedPlaylist = false;
-        public bool isLoopedTrack = false;
-        private SearchResponse playlistForLoop = new SearchResponse();
-        private LavaTrack trackForLoop = null;
+        //private bool isLoopedPlaylist = false;
+        private Dictionary<IGuild, Tuple<bool, SearchResponse>> Playlists4Loop = new Dictionary<IGuild, Tuple<bool, SearchResponse>>();
+        private Dictionary<IGuild, Tuple<bool, LavaTrack>> Tracks4Loop = new Dictionary<IGuild, Tuple<bool, LavaTrack>>();
+        //private bool isLoopedTrack = false;
+        //private SearchResponse playlistForLoop = new SearchResponse();
+        //private LavaTrack trackForLoop = null;
 
         public MusicService(LavaNode lavaNode, DiscordSocketClient client)
         {
@@ -31,8 +31,28 @@ namespace NMB.Services
             _client = client;
             _lavaNode.OnTrackStarted += TrackStarted;
             _lavaNode.OnTrackEnded += TrackEnded;
+            _lavaNode.OnPlayerUpdated += PlayerUpdated;
+            _lavaNode.OnStatsReceived += StatsReceived;
+            _lavaNode.OnTrackStuck += TrackStuck;
             _lavaNode.OnLog += LogMS;
             _client.Ready += OnReadyClient;
+        }
+
+        private Task TrackStuck(TrackStuckEventArgs arg)
+        {
+            return Task.CompletedTask;
+        }
+
+        private Task StatsReceived(StatsEventArgs arg)
+        {
+            Log.Information($"{arg.Uptime.ToString(@"hh\:mm\:ss")} - PP: {arg.PlayingPlayers}, P: {arg.Players}");
+            return Task.CompletedTask;
+        }
+
+        private Task PlayerUpdated(PlayerUpdateEventArgs arg)
+        {
+            //Log.Information($"{arg.Track.Title} - {arg.Track.Position}");
+            return Task.CompletedTask;
         }
 
         private async Task TrackStarted(TrackStartEventArgs arg)
@@ -118,7 +138,7 @@ namespace NMB.Services
             }
         }
 
-        public async Task ForcePlayAsync(SocketGuildUser user, ITextChannel textChannel, string query = "", SearchResponse searchResponse = new(), int numberOfTrack = -1)
+        public async Task PlayAsync(SocketGuildUser user, ITextChannel textChannel, string query = "", SearchResponse searchResponse = new(), int numberOfTrack = -1)
         {
             var voiceState = user as IVoiceState;
             if (!CheckIsUserInVoiceChannel(user, textChannel).Result)
@@ -142,18 +162,20 @@ namespace NMB.Services
 
                 if (search.Status == SearchStatus.NoMatches)
                 {
-                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("Music", $"I wasn't able to find anything for {query}."));
+                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("Play", $"I wasn't able to find anything for {query}."));
                 }
 
                 track = numberOfTrack > 0 ?
                     search.Tracks.ElementAt(numberOfTrack - 1) :
                     search.Tracks.FirstOrDefault();
 
+                Tracks4Loop.Add(guild, new Tuple<bool, LavaTrack>(false, track));
+
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
                     player.Queue.Enqueue(track);
                     Log.Information($"{track.Title} has been added to the queue");
-                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Force Play", $"{track.Title} has been added to queue.", Color.Blue));
+                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Play", $"{track.Title} has been added to queue.", Color.Blue));
                 }
                 else
                     await player.PlayAsync(track);
@@ -250,8 +272,7 @@ namespace NMB.Services
                 {
                     await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("Music", $"I wasn't able to find anything."));
                 }
-                playlistForLoop = search;
-                trackForLoop = null;
+                Playlists4Loop.Add(guild, new Tuple<bool, SearchResponse>(false, search));
                 List<LavaTrack> tracks = search.Tracks.ToList();
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
@@ -350,21 +371,19 @@ namespace NMB.Services
                     return;
                 }
 
-                if (playlistForLoop.Tracks != null)
+                if (Playlists4Loop.ContainsKey(guild))
                 {
-                    isLoopedPlaylist = true;
-                    isLoopedTrack = false;
-                    Log.Information($"Playlist {playlistForLoop.Playlist.Name} looped");
-                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Looped on playlist: {playlistForLoop.Playlist.Name}", Color.Gold));
+                    Playlists4Loop[guild] = new Tuple<bool, SearchResponse>(true, Playlists4Loop[guild].Item2);
+                    Log.Information($"Playlist {Playlists4Loop[guild].Item2.Playlist.Name} looped");
+                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Looped on playlist: {Playlists4Loop[guild].Item2.Playlist.Name}", Color.Gold));
                     return;
                 }
 
-                if (trackForLoop != null)
+                if (Tracks4Loop.ContainsKey(guild))
                 {
-                    isLoopedTrack = true;
-                    isLoopedPlaylist = false;
-                    Log.Information($"Track {trackForLoop.Title} looped");
-                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Looped on track: {trackForLoop.Title}\n URL: {trackForLoop.Url}", Color.Gold));
+                    Tracks4Loop[guild] = new Tuple<bool, LavaTrack>(true, Tracks4Loop[guild].Item2);
+                    Log.Information($"Track {Tracks4Loop[guild].Item2.Title} looped");
+                    await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Looped on track: {Tracks4Loop[guild].Item2.Title}\n URL: {Tracks4Loop[guild].Item2.Url}", Color.Gold));
                     return;
                 }
                 await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("Loop", "Nothing to loop"));
@@ -536,12 +555,10 @@ namespace NMB.Services
 
                 if (player.PlayerState is PlayerState.Playing)
                 {
-                    trackForLoop = null;
-                    playlistForLoop = new SearchResponse();
+                    Playlists4Loop.Remove(guild);
+                    Tracks4Loop.Remove(guild);
                     await player.StopAsync();
                     player.Queue.Clear();
-                    isLoopedPlaylist = false;
-                    isLoopedTrack = false;
                 }
 
                 Log.Information($"Bot has stopped playback.");
@@ -630,7 +647,7 @@ namespace NMB.Services
 
                 case TrackEndReason.Finished:
                     //await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track's ended", Color.Green));
-                   // Log.Information($"Track **{track}** ended");
+                    // Log.Information($"Track **{track}** ended");
                     break;
 
                 case TrackEndReason.LoadFailed:
@@ -645,20 +662,20 @@ namespace NMB.Services
 
                 case TrackEndReason.Stopped:
                     await args.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Track ended", $"Track **{track}** stopped", Color.Green));
-                   // Log.Information($"Track **{track}** stopped");
+                    // Log.Information($"Track **{track}** stopped");
                     break;
             }
 
             if (!args.Player.Queue.Any())
             {
-                if (isLoopedPlaylist)
-                    args.Player.Queue.Enqueue(playlistForLoop.Tracks);
-                if (isLoopedTrack)
-                    args.Player.Queue.Enqueue(trackForLoop);
+                var guild = args.Player.VoiceChannel.Guild;
+                if (Playlists4Loop.ContainsKey(guild))
+                    args.Player.Queue.Enqueue(Playlists4Loop[guild].Item2.Tracks);
+                if (Tracks4Loop.ContainsKey(guild))
+                    args.Player.Queue.Enqueue(Tracks4Loop[guild].Item2);
             }
 
-            LavaTrack nextTrack = null;
-            if (args.Player.Queue.TryDequeue(out nextTrack))
+            if (args.Player.Queue.TryDequeue(out LavaTrack nextTrack))
             {
                 await args.Player.PlayAsync(nextTrack);
             }
