@@ -168,8 +168,12 @@ namespace NMB.Services
                 track = numberOfTrack > 0 ?
                     search.Tracks.ElementAt(numberOfTrack - 1) :
                     search.Tracks.FirstOrDefault();
+                if (!Tracks4Loop.ContainsKey(guild))
+                    Tracks4Loop.Add(guild, new Tuple<bool, LavaTrack>(false, track));
+                else
+                    Tracks4Loop[guild] = new Tuple<bool, LavaTrack>(false, track);
 
-                Tracks4Loop.Add(guild, new Tuple<bool, LavaTrack>(false, track));
+
 
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
@@ -272,7 +276,10 @@ namespace NMB.Services
                 {
                     await textChannel.SendMessageAsync(embed: await EmbedHandler.CreateErrorEmbed("Music", $"I wasn't able to find anything."));
                 }
-                Playlists4Loop.Add(guild, new Tuple<bool, SearchResponse>(false, search));
+                if (!Playlists4Loop.ContainsKey(guild))
+                    Playlists4Loop.Add(guild, new Tuple<bool, SearchResponse>(false, search));
+                else
+                    Playlists4Loop[guild] = new Tuple<bool, SearchResponse>(false, search);
                 List<LavaTrack> tracks = search.Tracks.ToList();
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
