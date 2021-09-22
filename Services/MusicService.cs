@@ -46,6 +46,8 @@ namespace NMB.Services
         private Task StatsReceived(StatsEventArgs arg)
         {
             Log.Information($"{arg.Uptime.ToString(@"hh\:mm\:ss")} - PP: {arg.PlayingPlayers}, P: {arg.Players}");
+            int status = new Random().Next(2, 4);
+            _client.SetGameAsync("как горит Notchik", type: (ActivityType)status);
             return Task.CompletedTask;
         }
 
@@ -327,7 +329,7 @@ namespace NMB.Services
                 }
 
                 track = search.Tracks.First();
-                if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
+                if (player.Track != null && (player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused))
                 {
                     Log.Information($"{track.Title} is playing, sorry");
                     return;
@@ -687,49 +689,6 @@ namespace NMB.Services
                 await args.Player.PlayAsync(nextTrack);
             }
 
-            #region previous_version
-
-            /*
-                        var currentTrack = args.Player.Queue.FirstOrDefault();
-                        if (args.Reason == TrackEndReason.Replaced && currentTrack != null)
-                        {
-                            return;
-                        }
-
-                        if (args.Player.Queue.Count == 0)
-                        {
-                            if (isLoopedPlaylist)
-                            {
-                                args.Player.Queue.Enqueue(playlistForLoop.Tracks);
-                                await args.Player.SkipAsync();
-                                return;
-                            }
-                            if (isLoopedTrack)
-                            {
-                                args.Player.Queue.Enqueue(trackForLoop);
-                                await args.Player.SkipAsync();
-                                return;
-                            }
-                        }
-
-                        if (!args.Player.Queue.TryDequeue(out var queueable))
-                        {
-                            await args.Player.TextChannel.SendMessageAsync(
-                                embed: await EmbedHandler.CreateBasicEmbed("Playlist", $"Playback is finished", Color.Green));
-                            return;
-                        }
-                        if (!(queueable is LavaTrack track))
-                        {
-                            await args.Player.TextChannel.SendMessageAsync("Next item in queue is not a track.");
-                            return;
-                        }
-
-                        await args.Player.PlayAsync(track);
-                        await args.Player.TextChannel.SendMessageAsync(
-                            embed: await EmbedHandler.CreateBasicEmbed("Now Playing", $"[{track.Title}]({track.Url})", Color.Blue, track.FetchArtworkAsync().Result));
-                   */
-
-            #endregion previous_version
         }
     }
 }

@@ -45,6 +45,8 @@ namespace NMB
                             LogLevel = LogSeverity.Verbose,
                             AlwaysDownloadUsers = true,
                             MessageCacheSize = 200,
+                            DefaultRetryMode = RetryMode.AlwaysRetry,
+                            
                         };
 
                         config.Token = context.Configuration["DiscordToken"];
@@ -55,7 +57,7 @@ namespace NMB
                         config = new CommandServiceConfig()
                         {
                             CaseSensitiveCommands = false,
-                            LogLevel = LogSeverity.Verbose
+                            LogLevel = LogSeverity.Verbose,                            
                         };
                     })
                     .ConfigureServices((context, services) =>
@@ -67,7 +69,9 @@ namespace NMB
                         .AddSingleton<MusicService>()
                         .AddLavaNode(x =>
                         {
-                            x.SelfDeaf = true;                           
+                            x.SelfDeaf = true;
+                            x.EnableResume = true;
+                            x.ReconnectDelay = new System.TimeSpan(0, 0, 2);
                         })
                         ;
                     });
