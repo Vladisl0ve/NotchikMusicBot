@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Addons.Interactive;
@@ -15,6 +16,30 @@ namespace NMB.Modules
     {
         public MusicService MusicService { get; set; }
         public LavaNode _lavaNode { get; set; }
+        [Command("Help")]
+        public async Task Help()
+        {
+            List<string> commands = new List<string>();
+            commands.AddRange(new List<string>
+            {
+                "Help",
+                "Join",
+                "Leave (disconnect)",
+                "Now Playing (np)",
+                "Play (p)",
+                "F",
+                "FPlay (fp) - just 'Force Play'",
+                "Stop",
+                "List (queue)",
+                "Skip (s)",
+                "Loop (l)",
+                "Volume",
+                "Pause",
+                "Resume"
+            });
+
+            await ReplyAsync(embed: await EmbedHandler.CreateListEmbed("Commands to use", commands, Color.LightOrange));
+        }
 
         [Command("Join")]
         public async Task JoinAndPlay()
