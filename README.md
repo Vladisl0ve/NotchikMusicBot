@@ -29,11 +29,20 @@ That config must have:
   "DiscordToken": " PLACE TOKEN OF YOUR BOT HERE",
   "DefaultPrefix": "!", //whatever you want
   "ActivityType": 1, //not necessary
-  "ActivityName": "Debugging!", //not necessary
-  "BlacklistedChannels": [] //not necessary
+  "ActivityName": "Debugging!",
+  "BlacklistedChannels": [], //not necessary
+  "OneTrackRepeat": "", // link to the track, ex: "https://www.youtube.com/watch?v=_S7WEVLbQ-Y"
+  "IdServerRepeat": "", //Id of the server to have player
+  "VoiceChannelToConnect": "" // part or full name of voice channel to be connected by bot
 }
 ```
 # Changelog
+#### Version 2.2
+- "Only one track repeat" mode added
+- Activity added to the config
+- Config changed
+- Some fixed
+- Code cleaned up
 #### Version 2.1.3
 - Fixed loop bug #2
 - Game status added;
