@@ -16,6 +16,7 @@ namespace NMB.Modules
     {
         public MusicService MusicService { get; set; }
         public LavaNode _lavaNode { get; set; }
+
         [Command("Help")]
         public async Task Help()
         {

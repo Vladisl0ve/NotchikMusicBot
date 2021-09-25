@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Addons.Interactive;
-using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -26,8 +22,10 @@ namespace NMB.Services
         private readonly DiscordSocketClient _client;
         private IHost _host;
         private IConfiguration _config;
+
         //private bool isLoopedPlaylist = false;
         private Dictionary<IGuild, Tuple<bool, SearchResponse>> Playlists4Loop = new Dictionary<IGuild, Tuple<bool, SearchResponse>>();
+
         private Dictionary<IGuild, Tuple<bool, LavaTrack>> Tracks4Loop = new Dictionary<IGuild, Tuple<bool, LavaTrack>>();
         //private bool isLoopedTrack = false;
         //private SearchResponse playlistForLoop = new SearchResponse();
@@ -56,7 +54,7 @@ namespace NMB.Services
 
         private Task StatsReceived(StatsEventArgs arg)
         {
-            if (_lavaNode.IsConnected && _config["OneTrackRepeat"].Count() > 3)
+            if (_lavaNode.IsConnected && _config["OneTrackRepeat"] != null)
             {
                 IGuild guild = _client.GetGuild(ulong.Parse(_config["IdServerRepeat"]));
                 LavaPlayer player;
@@ -64,15 +62,11 @@ namespace NMB.Services
                 {
                     _ = PlaySpecialTrack();
                 }
-
             }
-
-
 
             Log.Information($"{arg.Uptime.ToString(@"hh\:mm\:ss")} - PP: {arg.PlayingPlayers}, P: {arg.Players}");
             int status = new Random().Next(2, 4);
-            _client.SetGameAsync(_config["Activity"], type: (ActivityType)status);
-
+            _client.SetGameAsync(_config["ActivityName"], type: (ActivityType)status);
 
             return Task.CompletedTask;
         }
@@ -212,7 +206,6 @@ namespace NMB.Services
             {
                 Log.Error(ex, ex.Message);
             }
-
         }
 
         public async Task PlayAsync(SocketGuildUser user, ITextChannel textChannel, string query = "", SearchResponse searchResponse = new(), int numberOfTrack = -1)
@@ -249,8 +242,6 @@ namespace NMB.Services
                     Tracks4Loop.Add(guild, new Tuple<bool, LavaTrack>(false, track));
                 else
                     Tracks4Loop[guild] = new Tuple<bool, LavaTrack>(false, track);
-
-
 
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
@@ -770,7 +761,6 @@ namespace NMB.Services
             {
                 await args.Player.PlayAsync(nextTrack);
             }
-
         }
     }
 }
