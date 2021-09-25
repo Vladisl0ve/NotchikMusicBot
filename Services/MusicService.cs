@@ -56,7 +56,7 @@ namespace NMB.Services
 
         private Task StatsReceived(StatsEventArgs arg)
         {
-            if (_lavaNode.IsConnected && _config["OneTrackRepeat"].Any())
+            if (_lavaNode.IsConnected && _config["OneTrackRepeat"].Count() > 3)
             {
                 IGuild guild = _client.GetGuild(ulong.Parse(_config["IdServerRepeat"]));
                 LavaPlayer player;
@@ -71,7 +71,7 @@ namespace NMB.Services
 
             Log.Information($"{arg.Uptime.ToString(@"hh\:mm\:ss")} - PP: {arg.PlayingPlayers}, P: {arg.Players}");
             int status = new Random().Next(2, 4);
-            _client.SetGameAsync("как горит Notchik", type: (ActivityType)status);
+            _client.SetGameAsync(_config["Activity"], type: (ActivityType)status);
 
 
             return Task.CompletedTask;
