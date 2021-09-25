@@ -1,10 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Addons.Interactive;
+using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using NMB.Handlers;
 using Serilog;
 using Victoria;
@@ -18,6 +24,8 @@ namespace NMB.Services
     {
         private readonly LavaNode _lavaNode;
         private readonly DiscordSocketClient _client;
+        private IHost _host;
+        private IConfiguration _config;
         //private bool isLoopedPlaylist = false;
         private Dictionary<IGuild, Tuple<bool, SearchResponse>> Playlists4Loop = new Dictionary<IGuild, Tuple<bool, SearchResponse>>();
         private Dictionary<IGuild, Tuple<bool, LavaTrack>> Tracks4Loop = new Dictionary<IGuild, Tuple<bool, LavaTrack>>();
@@ -25,10 +33,13 @@ namespace NMB.Services
         //private SearchResponse playlistForLoop = new SearchResponse();
         //private LavaTrack trackForLoop = null;
 
-        public MusicService(LavaNode lavaNode, DiscordSocketClient client)
+        public MusicService(LavaNode lavaNode, DiscordSocketClient client, IHost host, IConfiguration config)
         {
+            _host = host;
             _lavaNode = lavaNode;
             _client = client;
+            _config = config;
+
             _lavaNode.OnTrackStarted += TrackStarted;
             _lavaNode.OnTrackEnded += TrackEnded;
             _lavaNode.OnPlayerUpdated += PlayerUpdated;
@@ -45,9 +56,24 @@ namespace NMB.Services
 
         private Task StatsReceived(StatsEventArgs arg)
         {
+            if (_lavaNode.IsConnected && _config["OneTrackRepeat"].Any())
+            {
+                IGuild guild = _client.GetGuild(ulong.Parse(_config["IdServerRepeat"]));
+                LavaPlayer player;
+                if (!(_lavaNode.TryGetPlayer(guild, out player) || (player != null && player.Track == null)))
+                {
+                    _ = PlaySpecialTrack();
+                }
+
+            }
+
+
+
             Log.Information($"{arg.Uptime.ToString(@"hh\:mm\:ss")} - PP: {arg.PlayingPlayers}, P: {arg.Players}");
             int status = new Random().Next(2, 4);
             _client.SetGameAsync("как горит Notchik", type: (ActivityType)status);
+
+
             return Task.CompletedTask;
         }
 
@@ -64,7 +90,12 @@ namespace NMB.Services
             if (track.Id == "0s9P1IFxJ0Y") // Id of 'You fucking dead'
                 return;
 
-            await arg.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Now Playing: **{track.Title}**\nUrl: {track.Url}", Color.Blue, track.FetchArtworkAsync().Result));
+            if (_config["OneTrackRepeat"].Any()) //Otherwise no text channel to send message
+                return;
+
+            await arg.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Now Playing: **{track.Title}**\nUrl: {track.Url}",
+                                                                                                                            Color.Blue,
+                                                                                                                            track.FetchArtworkAsync().Result));
         }
 
         private async Task OnReadyClient()
@@ -72,7 +103,9 @@ namespace NMB.Services
             try
             {
                 if (!_lavaNode.IsConnected)
+                {
                     await _lavaNode.ConnectAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -138,6 +171,48 @@ namespace NMB.Services
             {
                 return await EmbedHandler.CreateErrorEmbed("Music, Join", ex.Message);
             }
+        }
+
+        public async Task PlaySpecialTrack()
+        {
+            IGuild guild = _client.GetGuild(ulong.Parse(_config["IdServerRepeat"]));
+            var voiceChannel = guild.GetVoiceChannelsAsync().Result.Where(vc => vc.Name.Contains(_config["VoiceChannelToConnect"])).FirstOrDefault();
+            if (voiceChannel == null)
+                return;
+
+            try
+            {
+                await _lavaNode.JoinAsync(voiceChannel);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, ex.Message);
+            }
+
+            try
+            {
+                var player = _lavaNode.GetPlayer(guild);
+                LavaTrack track;
+
+                var search = FindTracksAsync(_config["OneTrackRepeat"]).Result;
+
+                if (search.Status == SearchStatus.NoMatches)
+                {
+                    return;
+                }
+
+                track = search.Tracks.First();
+
+                if (!Tracks4Loop.ContainsKey(guild))
+                    Tracks4Loop.Add(guild, new Tuple<bool, LavaTrack>(true, track));
+
+                await player.PlayAsync(track);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, ex.Message);
+            }
+
         }
 
         public async Task PlayAsync(SocketGuildUser user, ITextChannel textChannel, string query = "", SearchResponse searchResponse = new(), int numberOfTrack = -1)
@@ -646,6 +721,13 @@ namespace NMB.Services
         {
             if (args.Track.Id == "0s9P1IFxJ0Y") //id of 'YOU FUCKING DEAD'
                 return;
+
+            if (_config["OneTrackRepeat"].Any()) //Otherwise no text channel to send message
+            {
+                _ = PlaySpecialTrack();
+                return;
+            }
+
             string track = args.Track.Title;
             switch (args.Reason)
             {
@@ -678,9 +760,9 @@ namespace NMB.Services
             if (!args.Player.Queue.Any())
             {
                 var guild = args.Player.VoiceChannel.Guild;
-                if (Playlists4Loop.ContainsKey(guild))
+                if (Playlists4Loop.ContainsKey(guild) && Playlists4Loop[guild].Item1)
                     args.Player.Queue.Enqueue(Playlists4Loop[guild].Item2.Tracks);
-                if (Tracks4Loop.ContainsKey(guild))
+                if (Tracks4Loop.ContainsKey(guild) && Tracks4Loop[guild].Item1)
                     args.Player.Queue.Enqueue(Tracks4Loop[guild].Item2);
             }
 

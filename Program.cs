@@ -27,6 +27,7 @@ namespace NMB
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
+
             var builder = Host.CreateDefaultBuilder(args)
                     .ConfigureAppConfiguration(x =>
                     {
@@ -46,7 +47,7 @@ namespace NMB
                             AlwaysDownloadUsers = true,
                             MessageCacheSize = 200,
                             DefaultRetryMode = RetryMode.AlwaysRetry,
-                            
+
                         };
 
                         config.Token = context.Configuration["DiscordToken"];
@@ -57,7 +58,7 @@ namespace NMB
                         config = new CommandServiceConfig()
                         {
                             CaseSensitiveCommands = false,
-                            LogLevel = LogSeverity.Verbose,                            
+                            LogLevel = LogSeverity.Verbose,
                         };
                     })
                     .ConfigureServices((context, services) =>
