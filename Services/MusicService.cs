@@ -84,7 +84,7 @@ namespace NMB.Services
             if (track.Id == "0s9P1IFxJ0Y") // Id of 'You fucking dead'
                 return;
 
-            if (_config["OneTrackRepeat"].Any()) //Otherwise no text channel to send message
+            if (_config["OneTrackRepeat"] != null) //Otherwise no text channel to send message
                 return;
 
             await arg.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Now Playing: **{track.Title}**\nUrl: {track.Url}",
@@ -713,7 +713,7 @@ namespace NMB.Services
             if (args.Track.Id == "0s9P1IFxJ0Y") //id of 'YOU FUCKING DEAD'
                 return;
 
-            if (_config["OneTrackRepeat"].Any()) //Otherwise no text channel to send message
+            if (_config["OneTrackRepeat"] != null) //Otherwise no text channel to send message
             {
                 _ = PlaySpecialTrack();
                 return;
