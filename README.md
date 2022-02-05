@@ -14,10 +14,10 @@
 
 ## `🏆🎯 Features:`
 
-😎 - Searching tracks on Youtube, SoundCloud, ~~Mixer~~, Vimeo, Twitch;
-😊 - Playing tracks and playlists;
-😃 - Loop track/playlist;
-😉 - Secret commands;
+😎 - Searching tracks on Youtube, SoundCloud, ~~Mixer~~, Vimeo, Twitch;<br />
+😊 - Playing tracks and playlists;<br />
+😃 - Loop track/playlist;<br />
+😉 - Secret commands;<br />
 
 ## `🎶🎶 Quick Start:`
 
