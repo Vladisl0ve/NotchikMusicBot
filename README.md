@@ -29,14 +29,17 @@ That config must have:
   "DiscordToken": " PLACE TOKEN OF YOUR BOT HERE",
   "DefaultPrefix": "!", //whatever you want
   "ActivityType": 1, //not necessary
-  "ActivityName": "Debugging!",
+  "ActivityName": "Under name activity Discord", //changeable
   "BlacklistedChannels": [], //not necessary
-  "OneTrackRepeat": "", // link to the track, ex: "https://www.youtube.com/watch?v=_S7WEVLbQ-Y"
-  "IdServerRepeat": "", //Id of the server to have player
-  "VoiceChannelToConnect": "" // part or full name of voice channel to be connected by bot
+  "OneTrackRepeat": "", //FOR 'ONE_TRACK_MODE': link to the track, ex: "https://www.youtube.com/watch?v=_S7WEVLbQ-Y"
+  "IdServerRepeat": "", //FOR 'ONE_TRACK_MODE': Id of the server to have audio-player
+  "VoiceChannelToConnect": "" //FOR 'ONE_TRACK_MODE': part or full name of voice channel to be connected by bot
 }
 ```
 # Changelog
+#### Version 2.3
+- Removed 'Forced play'
+- Playing track without choosing if there is only one track in searching result
 #### Version 2.2
 - "Only one track repeat" mode added
 - Activity added to the config

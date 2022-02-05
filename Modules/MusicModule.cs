@@ -29,7 +29,6 @@ namespace NMB.Modules
                 "Now Playing (np)",
                 "Play (p)",
                 "F",
-                "FPlay (fp) - just 'Force Play'",
                 "Stop",
                 "List (queue)",
                 "Skip (s)",
@@ -66,16 +65,25 @@ namespace NMB.Modules
                 return;
             }
 
-            if (!MusicService.TrackChoiceAsync(Context.Channel as ITextChannel, searchResponse).Result)
-                return;
-
-            var response = await NextMessageAsync();
-            if (response != null)
+            if (searchResponse.Tracks.Count == 1)
             {
-                if (int.TryParse(response.Content, out int responseInt) && responseInt > 0 && responseInt <= 5)
-                    await MusicService.PlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, searchResponse: searchResponse, numberOfTrack: responseInt);
-                else
-                    await ReplyAsync(embed: await EmbedHandler.CreateErrorEmbed("Music, choice of", "Use int only in (0; 5] area"));
+                var responseInt = 1;
+                await MusicService.PlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, searchResponse: searchResponse, numberOfTrack: responseInt);
+
+            }
+            else
+            {
+                if (!MusicService.TrackChoiceAsync(Context.Channel as ITextChannel, searchResponse).Result)
+                    return;
+
+                var response = await NextMessageAsync();
+                if (response != null)
+                {
+                    if (int.TryParse(response.Content, out int responseInt) && responseInt > 0 && responseInt <= 5)
+                        await MusicService.PlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, searchResponse: searchResponse, numberOfTrack: responseInt);
+                    else
+                        await ReplyAsync(embed: await EmbedHandler.CreateErrorEmbed("Music, choice of", "Use int only in (0; 5] area"));
+                }
             }
         }
 
@@ -91,11 +99,12 @@ namespace NMB.Modules
             await Task.Delay(player.Track.Duration.Add(new TimeSpan(0, 0, 1)));
             await MusicService.LeaveAsync(Context.Guild, true);
         }
-
-        [Command("FPlay")]
-        [Alias("fp")]
-        public async Task ForcePlay([Remainder] string search)
-            => await MusicService.PlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, search);
+        /*
+                [Command("FPlay")]
+                [Alias("fp")]
+                public async Task ForcePlay([Remainder] string search)
+                    => await MusicService.PlayAsync(Context.User as SocketGuildUser, Context.Channel as ITextChannel, search);
+        */
 
         [Command("Stop")]
         public async Task Stop()
