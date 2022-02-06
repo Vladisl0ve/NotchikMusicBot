@@ -23,13 +23,10 @@ namespace NMB.Services
         private IHost _host;
         private IConfiguration _config;
 
-        //private bool isLoopedPlaylist = false;
         private Dictionary<IGuild, Tuple<bool, SearchResponse>> Playlists4Loop = new Dictionary<IGuild, Tuple<bool, SearchResponse>>();
-
         private Dictionary<IGuild, Tuple<bool, LavaTrack>> Tracks4Loop = new Dictionary<IGuild, Tuple<bool, LavaTrack>>();
-        //private bool isLoopedTrack = false;
-        //private SearchResponse playlistForLoop = new SearchResponse();
-        //private LavaTrack trackForLoop = null;
+
+        private Dictionary<IGuild, DateTime> TimeToStop = new Dictionary<IGuild, DateTime>();
 
         public MusicService(LavaNode lavaNode, DiscordSocketClient client, IHost host, IConfiguration config)
         {
@@ -64,6 +61,13 @@ namespace NMB.Services
                 }
             }
 
+            foreach (var guild in TimeToStop.Keys)
+            {
+                if (TimeToStop[guild] != new DateTime())
+                    if (TimeToStop[guild] < DateTime.Now)
+                        LeaveAsync(guild, isTimeToLeave: true);
+            }
+
             Log.Information($"{arg.Uptime.ToString(@"hh\:mm\:ss")} - PP: {arg.PlayingPlayers}, P: {arg.Players}");
             int status = new Random().Next(2, 4);
             _client.SetGameAsync(_config["ActivityName"], type: (ActivityType)status);
@@ -86,6 +90,13 @@ namespace NMB.Services
 
             if (_config["OneTrackRepeat"] != null) //Otherwise no text channel to send message
                 return;
+
+            var guild = arg.Player.VoiceChannel.Guild;
+
+            if (!TimeToStop.ContainsKey(guild))
+                TimeToStop.Add(guild, new DateTime());
+            else
+                TimeToStop[guild] = new DateTime();
 
             await arg.Player.TextChannel.SendMessageAsync(embed: await EmbedHandler.CreateBasicEmbed("Music", $"Now Playing: **{track.Title}**\nUrl: {track.Url}",
                                                                                                                             Color.Blue,
@@ -159,6 +170,10 @@ namespace NMB.Services
             try
             {
                 await _lavaNode.JoinAsync(voiceState.VoiceChannel, textChannel);
+
+                if (!TimeToStop.ContainsKey(guild))
+                    TimeToStop.Add(guild, new DateTime());
+
                 return await EmbedHandler.CreateBasicEmbed("Music, Join", $"Joined {voiceState.VoiceChannel.Name}.", Color.Green);
             }
             catch (Exception ex)
@@ -496,7 +511,7 @@ namespace NMB.Services
             }
         }
 
-        public async Task LeaveAsync(IGuild guild, bool isF = false)
+        public async Task LeaveAsync(IGuild guild, bool isF = false, bool isTimeToLeave = false)
         {
             try
             {
@@ -512,6 +527,13 @@ namespace NMB.Services
                 await _lavaNode.LeaveAsync(player.VoiceChannel);
                 if (isF)
                     return;
+
+                if (isTimeToLeave)
+                {
+                    Log.Information($"Bot left due being inactive");
+                    await EmbedHandler.CreateBasicEmbed("Music", $"Bot has been inactive too long.\n " + "Good bye.", Color.DarkPurple);
+                    return;
+                }
 
                 Log.Information($"Bot left");
                 await EmbedHandler.CreateBasicEmbed("Music", $"Good bye.", Color.DarkPurple);
@@ -748,13 +770,20 @@ namespace NMB.Services
                     break;
             }
 
+
+
+
             if (!args.Player.Queue.Any())
             {
                 var guild = args.Player.VoiceChannel.Guild;
+
                 if (Playlists4Loop.ContainsKey(guild) && Playlists4Loop[guild].Item1)
                     args.Player.Queue.Enqueue(Playlists4Loop[guild].Item2.Tracks);
                 if (Tracks4Loop.ContainsKey(guild) && Tracks4Loop[guild].Item1)
                     args.Player.Queue.Enqueue(Tracks4Loop[guild].Item2);
+
+                if (!args.Player.Queue.Any())
+                    TimeToStop[guild] = DateTime.Now.Add(TimeSpan.Parse(_config["InactiveTime"]));
             }
 
             if (args.Player.Queue.TryDequeue(out LavaTrack nextTrack))

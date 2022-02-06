@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Discord;
 
 namespace NMB.DataStructs
@@ -9,6 +10,7 @@ namespace NMB.DataStructs
         public string DefaultPrefix { get; set; }
         public ActivityType ActivityType { get; set; }
         public string ActivityName { get; set; }
+        public TimeSpan InactiveTime { get; set; }
         public List<ulong> BlacklistedChannels { get; set; }
     }
 }

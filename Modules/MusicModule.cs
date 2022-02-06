@@ -97,7 +97,7 @@ namespace NMB.Modules
                 return;
 
             await Task.Delay(player.Track.Duration.Add(new TimeSpan(0, 0, 1)));
-            await MusicService.LeaveAsync(Context.Guild, true);
+            await MusicService.LeaveAsync(Context.Guild, isF: true);
         }
         /*
                 [Command("FPlay")]

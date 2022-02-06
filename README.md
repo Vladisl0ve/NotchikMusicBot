@@ -26,10 +26,11 @@ That config must have:
 
 ```cs
 {
-  "DiscordToken": " PLACE TOKEN OF YOUR BOT HERE",
+  "DiscordToken": " PLACE TOKEN OF YOUR BOT HERE ",
   "DefaultPrefix": "!", //whatever you want
   "ActivityType": 1, //not necessary
   "ActivityName": "Under name activity Discord", //changeable
+  "InactiveTime": "00:00:10", //How long bot can do nothing in channel before auto-disconnection.
   "BlacklistedChannels": [], //not necessary
   "OneTrackRepeat": "", //FOR 'ONE_TRACK_MODE': link to the track, ex: "https://www.youtube.com/watch?v=_S7WEVLbQ-Y"
   "IdServerRepeat": "", //FOR 'ONE_TRACK_MODE': Id of the server to have audio-player
@@ -37,6 +38,8 @@ That config must have:
 }
 ```
 # Changelog
+#### Version 2.4
+- Added auto-disconnection due inactive time (also added parameter to the config)
 #### Version 2.3
 - Removed 'Forced play'
 - Playing track without choosing if there is only one track in searching result
